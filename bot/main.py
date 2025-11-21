@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
 from bot.config import get_bot_token
-from bot.handlers.base_handlers import start
+from bot.handlers.base_handlers import start, help_command
 from bot.handlers.admin_handlers import (
     setup,
     set_date,
@@ -45,6 +45,7 @@ def main():
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("setup", setup))
     application.add_handler(CommandHandler("setdate", set_date))
     application.add_handler(CommandHandler("setprice", set_price))

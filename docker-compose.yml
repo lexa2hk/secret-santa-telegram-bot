@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: secret-santa-bot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - DB_PATH=/app/data/secret_santa.db
+    volumes:
+      - bot-data:/app/data
+    env_file:
+      - .env
+
+volumes:
+  bot-data:
+    driver: local

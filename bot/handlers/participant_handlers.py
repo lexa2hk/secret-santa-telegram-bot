@@ -4,6 +4,7 @@ Participant command handlers for Secret Santa Bot
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode
 
 from bot.utils import get_lang, db
 from bot.translations import get_text
@@ -64,7 +65,8 @@ async def participants(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         [f"{i+1}. {p[2] or 'Unknown'} (@{p[1] or 'no username'})" for i, p in enumerate(parts)]
     )
     await update.message.reply_text(
-        get_text(lang, "participants_list", count=len(parts), list=participant_list)
+        get_text(lang, "participants_list", count=len(parts), list=participant_list),
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -100,7 +102,7 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     info_text += get_text(lang, "info_participants", count=len(parts))
     info_text += get_text(lang, "info_status_assigned" if is_assigned else "info_status_not_assigned")
 
-    await update.message.reply_text(info_text)
+    await update.message.reply_text(info_text, parse_mode=ParseMode.MARKDOWN)
 
 
 async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -118,8 +120,8 @@ async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     user_groups = db.get_user_groups(user.id)
 
     if not user_groups:
-        # Default to English for private chat if no groups found
-        await update.message.reply_text(get_text("en", "myassignment_not_ready"))
+        # Default to Russian for private chat if no groups found
+        await update.message.reply_text(get_text("ru", "myassignment_not_ready"))
         return
 
     # Show all assignments
@@ -156,7 +158,7 @@ async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
             message += get_text(group_lang, "assignment_keep_secret")
 
-            await update.message.reply_text(message)
+            await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
 
 async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -174,14 +176,14 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_groups = db.get_user_groups(user.id)
 
     if not user_groups:
-        # Default to English for private chat if no groups found
-        await update.message.reply_text(get_text("en", "chat_no_groups"))
+        # Default to Russian for private chat if no groups found
+        await update.message.reply_text(get_text("ru", "chat_no_groups"))
         return
 
     # Check if message provided
     if not context.args:
         # Use language from first group
-        lang = user_groups[0][1] if user_groups else "en"
+        lang = user_groups[0][1] if user_groups else "ru"
         await update.message.reply_text(get_text(lang, "chat_usage"))
         return
 
@@ -209,7 +211,7 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             lang = user_groups[0][1]
             await update.message.reply_text(get_text(lang, "chat_message_sent"))
         else:
-            await update.message.reply_text(get_text("en", "chat_error"))
+            await update.message.reply_text(get_text("ru", "chat_error"))
     else:
         # Single group - send to that group's Secret Santa
         group_id, group_lang = user_groups[0]
@@ -221,7 +223,7 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             try:
                 # Send message to Secret Santa
                 full_message = get_text(group_lang, "chat_received_header") + message_text
-                await context.bot.send_message(chat_id=santa_user_id, text=full_message)
+                await context.bot.send_message(chat_id=santa_user_id, text=full_message, parse_mode=ParseMode.MARKDOWN)
                 await update.message.reply_text(get_text(group_lang, "chat_message_sent"))
             except Exception as e:
                 logger.error(f"Could not send chat message to user {santa_user_id}: {e}")

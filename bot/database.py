@@ -23,7 +23,7 @@ class Database:
                 admin_id INTEGER NOT NULL,
                 event_date TEXT,
                 max_price REAL,
-                language TEXT DEFAULT 'en',
+                language TEXT DEFAULT 'ru',
                 is_assigned BOOLEAN DEFAULT 0,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
@@ -218,7 +218,7 @@ class Database:
         cursor.execute("SELECT language FROM groups WHERE group_id = ?", (group_id,))
         result = cursor.fetchone()
         conn.close()
-        return result[0] if result else "en"
+        return result[0] if result else "ru"
 
     def set_language(self, group_id: int, language: str) -> bool:
         """Set language preference for a group"""

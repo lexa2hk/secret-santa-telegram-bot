@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode
 
 from bot.utils import get_lang, db
 from bot.translations import get_text
@@ -39,7 +40,7 @@ async def setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             message = get_text(lang, "setup_success_no_link", admin=user.first_name)
 
         message += get_text(lang, "setup_next_steps")
-        await update.message.reply_text(message)
+        await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
     else:
         await update.message.reply_text(get_text(lang, "setup_error"))
 
@@ -166,7 +167,8 @@ async def assign(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(
         get_text(lang, "assign_confirmation", count=len(parts)),
-        reply_markup=reply_markup
+        reply_markup=reply_markup,
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
@@ -190,7 +192,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         # Assign Secret Santas
         if db.assign_secret_santas(group_id):
-            await query.edit_message_text(get_text(lang, "assign_success"))
+            await query.edit_message_text(get_text(lang, "assign_success"), parse_mode=ParseMode.MARKDOWN)
 
             # Send DMs to all participants
             participants = db.get_participants(group_id)
@@ -215,7 +217,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
                         message += get_text(lang, "assignment_keep_secret")
 
-                        await context.bot.send_message(chat_id=user_id, text=message)
+                        await context.bot.send_message(chat_id=user_id, text=message, parse_mode=ParseMode.MARKDOWN)
                     except Exception as e:
                         logger.error(f"Could not send DM to user {user_id}: {e}")
         else:
