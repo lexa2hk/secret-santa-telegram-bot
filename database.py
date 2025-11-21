@@ -248,3 +248,16 @@ class Database:
         results = cursor.fetchall()
         conn.close()
         return results
+
+    def get_secret_santa_for_user(self, group_id: int, user_id: int) -> Optional[Tuple]:
+        """Get who is the Secret Santa for a given user (reverse lookup of assignment)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT user_id, username, first_name
+            FROM participants
+            WHERE group_id = ? AND assigned_to = ?
+        """, (group_id, user_id))
+        result = cursor.fetchone()
+        conn.close()
+        return result

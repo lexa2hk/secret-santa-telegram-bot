@@ -5,7 +5,7 @@ Multi-language support for Secret Santa Bot
 TRANSLATIONS = {
     "en": {
         # Start command
-        "start_private": "Hi {name}!\n\nI'm your Secret Santa bot. Add me to a group to get started!\n\nCommands:\n/setup - Initialize Secret Santa in a group (admin only)\n/setdate <YYYY-MM-DD> - Set event date\n/setprice <amount> - Set maximum gift price\n/join - Join the Secret Santa\n/participants - See all participants\n/info - View group settings\n/assign - Assign Secret Santas (admin only)\n/myassignment - View your Secret Santa assignment\n/lang <code> - Change language (ru/en)",
+        "start_private": "Hi {name}!\n\nI'm your Secret Santa bot. Add me to a group to get started!\n\nCommands:\n/setup - Initialize Secret Santa in a group (admin only)\n/setdate <YYYY-MM-DD> - Set event date\n/setprice <amount> - Set maximum gift price\n/join - Join the Secret Santa\n/participants - See all participants\n/info - View group settings\n/assign - Assign Secret Santas (admin only)\n/myassignment - View your Secret Santa assignment\n/chat <message> - Send anonymous message to your Secret Santa\n/lang <code> - Change language (ru/en)",
         "start_group": "Hello! Use /setup to initialize Secret Santa in this group.",
 
         # Setup command
@@ -31,7 +31,7 @@ TRANSLATIONS = {
         "setprice_setup_first": "Please use /setup first!",
         "setprice_usage": "Usage: /setprice <amount>\nExample: /setprice 50",
         "setprice_positive": "Price must be greater than 0!",
-        "setprice_success": "Maximum gift price set to: ${price:.2f}",
+        "setprice_success": "Maximum gift price set to: {price:.2f}",
         "setprice_error": "Error setting price. Try again!",
         "setprice_invalid": "Invalid price! Please enter a number.",
 
@@ -54,7 +54,7 @@ TRANSLATIONS = {
         "info_header": "Secret Santa Info:\n\n",
         "info_event_date": "Event Date: {date}\n",
         "info_event_date_not_set": "Event Date: Not set\n",
-        "info_max_price": "Max Price: ${price:.2f}\n",
+        "info_max_price": "Max Price: {price:.2f}\n",
         "info_max_price_not_set": "Max Price: Not set\n",
         "info_participants": "Participants: {count}\n",
         "info_status_assigned": "Status: Assigned",
@@ -75,7 +75,7 @@ TRANSLATIONS = {
         "assignment_header": "Your Secret Santa assignment:\n\n",
         "assignment_for": "You are Secret Santa for: {name}",
         "assignment_event_date": "Event Date: {date}\n",
-        "assignment_max_price": "Max Price: ${price:.2f}\n",
+        "assignment_max_price": "Max Price: {price:.2f}\n",
         "assignment_keep_secret": "\nKeep it secret!",
 
         # My assignment command
@@ -85,10 +85,20 @@ TRANSLATIONS = {
         # Language command
         "lang_success": "Language changed to English!",
         "lang_usage": "Usage: /lang <code>\nAvailable languages:\n/lang en - English\n/lang ru - Russian",
+
+        # Chat with Secret Santa command
+        "chat_group_only": "This command only works in private chat! DM me to send messages.",
+        "chat_no_groups": "You don't have any Secret Santa assignments yet!",
+        "chat_usage": "Usage: /chat <message>\nExample: /chat Do you have any gift preferences?",
+        "chat_message_sent": "✅ Your message has been sent anonymously to your Secret Santa!",
+        "chat_error": "Error sending message. Try again!",
+        "chat_received_header": "📨 Anonymous message from your Secret Santa recipient:\n\n",
+        "chat_select_group": "You're in multiple Secret Santa groups. Reply with the group number to select:\n\n{groups}\n\nThen use /chat again to send your message.",
+        "chat_group_selected": "Group selected: {group}\nNow use /chat <message> to send a message.",
     },
     "ru": {
         # Start command
-        "start_private": "Привет, {name}!\n\nЯ бот для Тайного Санты. Добавь меня в группу, чтобы начать!\n\nКоманды:\n/setup - Инициализировать Тайного Санту в группе (только админ)\n/setdate <ГГГГ-ММ-ДД> - Установить дату события\n/setprice <сумма> - Установить максимальную цену подарка\n/join - Присоединиться к Тайному Санте\n/participants - Посмотреть всех участников\n/info - Посмотреть настройки группы\n/assign - Назначить Тайных Сант (только админ)\n/myassignment - Посмотреть твоё назначение\n/lang <код> - Изменить язык (ru/en)",
+        "start_private": "Привет, {name}!\n\nЯ бот для Тайного Санты. Добавь меня в группу, чтобы начать!\n\nКоманды:\n/setup - Инициализировать Тайного Санту в группе (только админ)\n/setdate <ГГГГ-ММ-ДД> - Установить дату события\n/setprice <сумма> - Установить максимальную цену подарка\n/join - Присоединиться к Тайному Санте\n/participants - Посмотреть всех участников\n/info - Посмотреть настройки группы\n/assign - Назначить Тайных Сант (только админ)\n/myassignment - Посмотреть твоё назначение\n/chat <сообщение> - Отправить анонимное сообщение своему Тайному Санте\n/lang <код> - Изменить язык (ru/en)",
         "start_group": "Привет! Используй /setup чтобы инициализировать Тайного Санту в этой группе.",
 
         # Setup command
@@ -114,7 +124,7 @@ TRANSLATIONS = {
         "setprice_setup_first": "Пожалуйста, сначала используй /setup!",
         "setprice_usage": "Использование: /setprice <сумма>\nПример: /setprice 50",
         "setprice_positive": "Цена должна быть больше 0!",
-        "setprice_success": "Максимальная цена подарка установлена: ${price:.2f}",
+        "setprice_success": "Максимальная цена подарка установлена: {price:.2f}",
         "setprice_error": "Ошибка при установке цены. Попробуй снова!",
         "setprice_invalid": "Неверная цена! Пожалуйста, введи число.",
 
@@ -137,7 +147,7 @@ TRANSLATIONS = {
         "info_header": "Информация о Тайном Санте:\n\n",
         "info_event_date": "Дата события: {date}\n",
         "info_event_date_not_set": "Дата события: Не установлена\n",
-        "info_max_price": "Макс. цена: ${price:.2f}\n",
+        "info_max_price": "Макс. цена: {price:.2f}\n",
         "info_max_price_not_set": "Макс. цена: Не установлена\n",
         "info_participants": "Участников: {count}\n",
         "info_status_assigned": "Статус: Назначены",
@@ -158,7 +168,7 @@ TRANSLATIONS = {
         "assignment_header": "Твоё назначение Тайного Санты:\n\n",
         "assignment_for": "Ты Тайный Санта для: {name}",
         "assignment_event_date": "Дата события: {date}\n",
-        "assignment_max_price": "Макс. цена: ${price:.2f}\n",
+        "assignment_max_price": "Макс. цена: {price:.2f}\n",
         "assignment_keep_secret": "\nСохрани это в секрете!",
 
         # My assignment command
@@ -168,6 +178,16 @@ TRANSLATIONS = {
         # Language command
         "lang_success": "Язык изменен на русский!",
         "lang_usage": "Использование: /lang <код>\nДоступные языки:\n/lang en - English\n/lang ru - Русский",
+
+        # Chat with Secret Santa command
+        "chat_group_only": "Эта команда работает только в личных сообщениях! Напиши мне в личку, чтобы отправить сообщение.",
+        "chat_no_groups": "У тебя пока нет назначений Тайного Санты!",
+        "chat_usage": "Использование: /chat <сообщение>\nПример: /chat Есть ли у тебя предпочтения по подарку?",
+        "chat_message_sent": "✅ Твоё сообщение отправлено анонимно твоему Тайному Санте!",
+        "chat_error": "Ошибка при отправке сообщения. Попробуй снова!",
+        "chat_received_header": "📨 Анонимное сообщение от получателя твоего подарка:\n\n",
+        "chat_select_group": "Ты участвуешь в нескольких группах Тайного Санты. Ответь номером группы для выбора:\n\n{groups}\n\nЗатем используй /chat снова, чтобы отправить сообщение.",
+        "chat_group_selected": "Группа выбрана: {group}\nТеперь используй /chat <сообщение> для отправки.",
     }
 }
 

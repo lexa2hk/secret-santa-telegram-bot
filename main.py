@@ -445,6 +445,77 @@ async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text(get_text(current_lang, "setup_error"))
 
 
+async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send anonymous message to Secret Santa."""
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if chat.type != "private":
+        # In group, use group's language
+        lang = get_lang(chat.id)
+        await update.message.reply_text(get_text(lang, "chat_group_only"))
+        return
+
+    # Get all groups where user has assignments
+    user_groups = db.get_user_groups(user.id)
+
+    if not user_groups:
+        # Default to English for private chat if no groups found
+        await update.message.reply_text(get_text("en", "chat_no_groups"))
+        return
+
+    # Check if message provided
+    if not context.args:
+        # Use language from first group
+        lang = user_groups[0][1] if user_groups else "en"
+        await update.message.reply_text(get_text(lang, "chat_usage"))
+        return
+
+    message_text = " ".join(context.args)
+
+    # If user is in multiple groups, let them select (for now, send to first group)
+    # TODO: Add proper group selection with inline keyboard
+    if len(user_groups) > 1:
+        # For now, send to all groups
+        sent_count = 0
+        for group_id, group_lang in user_groups:
+            # Find who is giving to this user (their Secret Santa)
+            secret_santa = db.get_secret_santa_for_user(group_id, user.id)
+            if secret_santa:
+                santa_user_id, santa_username, santa_first_name = secret_santa
+                try:
+                    # Send message to Secret Santa
+                    full_message = get_text(group_lang, "chat_received_header") + message_text
+                    await context.bot.send_message(chat_id=santa_user_id, text=full_message)
+                    sent_count += 1
+                except Exception as e:
+                    logger.error(f"Could not send chat message to user {santa_user_id}: {e}")
+
+        if sent_count > 0:
+            lang = user_groups[0][1]
+            await update.message.reply_text(get_text(lang, "chat_message_sent"))
+        else:
+            await update.message.reply_text(get_text("en", "chat_error"))
+    else:
+        # Single group - send to that group's Secret Santa
+        group_id, group_lang = user_groups[0]
+
+        # Find who is giving to this user (their Secret Santa)
+        secret_santa = db.get_secret_santa_for_user(group_id, user.id)
+        if secret_santa:
+            santa_user_id, santa_username, santa_first_name = secret_santa
+            try:
+                # Send message to Secret Santa
+                full_message = get_text(group_lang, "chat_received_header") + message_text
+                await context.bot.send_message(chat_id=santa_user_id, text=full_message)
+                await update.message.reply_text(get_text(group_lang, "chat_message_sent"))
+            except Exception as e:
+                logger.error(f"Could not send chat message to user {santa_user_id}: {e}")
+                await update.message.reply_text(get_text(group_lang, "chat_error"))
+        else:
+            await update.message.reply_text(get_text(group_lang, "chat_error"))
+
+
 def main():
     """Start the bot."""
     token = os.getenv("BOT_TOKEN")
@@ -466,6 +537,7 @@ def main():
     application.add_handler(CommandHandler("assign", assign))
     application.add_handler(CommandHandler("myassignment", my_assignment))
     application.add_handler(CommandHandler("lang", lang_command))
+    application.add_handler(CommandHandler("chat", chat_command))
     application.add_handler(CallbackQueryHandler(button_callback))
 
     # Run the bot
