@@ -1,18 +1,43 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: secret-santa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-secretsanta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretsanta}
+      POSTGRES_DB: ${POSTGRES_DB:-secretsanta}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secretsanta}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - secret-santa-network
+
   bot:
     build: .
     container_name: secret-santa-bot
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
-      - DB_PATH=/app/data/secret_santa.db
-    volumes:
-      - bot-data:/app/data
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-secretsanta}:${POSTGRES_PASSWORD:-secretsanta}@db:5432/${POSTGRES_DB:-secretsanta}
     env_file:
       - .env
+    networks:
+      - secret-santa-network
 
 volumes:
-  bot-data:
+  postgres-data:
     driver: local
+
+networks:
+  secret-santa-network:
+    driver: bridge
