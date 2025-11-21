@@ -31,17 +31,25 @@ async def setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Create group in database
     if db.create_group(chat.id, user.id):
+        logger.info(
+            f"🎄 New Secret Santa group created | "
+            f"Group: {chat.id} ({chat.title}) | "
+            f"Admin: {user.id} (@{user.username or 'N/A'}, {user.first_name})"
+        )
+
         # Try to get invite link (requires bot to be admin with invite link permission)
         try:
             invite_link = await chat.export_invite_link()
             message = get_text(lang, "setup_success_with_link", admin=user.first_name, link=invite_link)
+            logger.info(f"Invite link generated for group {chat.id}: {invite_link}")
         except Exception as e:
-            logger.warning(f"Could not export invite link: {e}")
+            logger.warning(f"Could not export invite link for group {chat.id}: {e}")
             message = get_text(lang, "setup_success_no_link", admin=user.first_name)
 
         message += get_text(lang, "setup_next_steps")
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
     else:
+        logger.error(f"Failed to create Secret Santa group {chat.id}")
         await update.message.reply_text(get_text(lang, "setup_error"))
 
 
@@ -76,8 +84,15 @@ async def set_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         datetime.strptime(date_str, "%Y-%m-%d")
         if db.update_group_settings(chat.id, event_date=date_str):
+            logger.info(
+                f"📅 Event date set | "
+                f"Group: {chat.id} | "
+                f"Date: {date_str} | "
+                f"Admin: {user.id} (@{user.username or 'N/A'})"
+            )
             await update.message.reply_text(get_text(lang, "setdate_success", date=date_str))
         else:
+            logger.error(f"Failed to set event date for group {chat.id}")
             await update.message.reply_text(get_text(lang, "setdate_error"))
     except ValueError:
         await update.message.reply_text(get_text(lang, "setdate_invalid_format"))
@@ -85,43 +100,53 @@ async def set_date(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def set_price(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set the maximum gift price."""
+    if not update.effective_message:
+        return
+
     chat = update.effective_chat
     user = update.effective_user
     lang = get_lang(chat.id)
 
     if chat.type == "private":
-        await update.message.reply_text(get_text(lang, "setprice_group_only"))
+        await update.effective_message.reply_text(get_text(lang, "setprice_group_only"))
         return
 
     # Check if user is admin
     member = await chat.get_member(user.id)
     if member.status not in ["creator", "administrator"]:
-        await update.message.reply_text(get_text(lang, "setprice_admin_only"))
+        await update.effective_message.reply_text(get_text(lang, "setprice_admin_only"))
         return
 
     # Check if group exists
     group = db.get_group(chat.id)
     if not group:
-        await update.message.reply_text(get_text(lang, "setprice_setup_first"))
+        await update.effective_message.reply_text(get_text(lang, "setprice_setup_first"))
         return
 
     # Parse price
     if not context.args:
-        await update.message.reply_text(get_text(lang, "setprice_usage"))
+        await update.effective_message.reply_text(get_text(lang, "setprice_usage"))
         return
 
     try:
         price = float(context.args[0])
         if price <= 0:
-            await update.message.reply_text(get_text(lang, "setprice_positive"))
+            await update.effective_message.reply_text(get_text(lang, "setprice_positive"))
             return
 
         if db.update_group_settings(chat.id, max_price=price):
-            await update.message.reply_text(get_text(lang, "setprice_success", price=price))
+            logger.info(
+                f"💰 Max price set | "
+                f"Group: {chat.id} | "
+                f"Price: {price} | "
+                f"Admin: {user.id} (@{user.username or 'N/A'})"
+            )
+            await update.effective_message.reply_text(get_text(lang, "setprice_success", price=price))
         else:
-            await update.message.reply_text(get_text(lang, "setprice_error"))
+            logger.error(f"Failed to set max price for group {chat.id}")
+            await update.effective_message.reply_text(get_text(lang, "setprice_error"))
     except ValueError:
-        await update.message.reply_text(get_text(lang, "setprice_invalid"))
+        await update.effective_message.reply_text(get_text(lang, "setprice_invalid"))
 
 
 async def assign(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -192,12 +217,22 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         # Assign Secret Santas
         if db.assign_secret_santas(group_id):
+            participants = db.get_participants(group_id)
+            logger.info(
+                f"🎁 Secret Santas assigned | "
+                f"Group: {group_id} | "
+                f"Participants: {len(participants)} | "
+                f"Admin: {user.id} (@{user.username or 'N/A'})"
+            )
+
             await query.edit_message_text(get_text(lang, "assign_success"), parse_mode=ParseMode.MARKDOWN)
 
             # Send DMs to all participants
-            participants = db.get_participants(group_id)
             group_info = db.get_group(group_id)
             _, _, event_date, max_price, language, _ = group_info
+
+            dm_sent_count = 0
+            dm_failed_count = 0
 
             for user_id, username, first_name, _ in participants:
                 assignment = db.get_assignment(group_id, user_id)
@@ -218,9 +253,29 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                         message += get_text(lang, "assignment_keep_secret")
 
                         await context.bot.send_message(chat_id=user_id, text=message, parse_mode=ParseMode.MARKDOWN)
+                        dm_sent_count += 1
+
+                        logger.info(
+                            f"📬 Assignment DM sent | "
+                            f"Group: {group_id} | "
+                            f"To: {user_id} (@{username or 'N/A'}) | "
+                            f"Assigned: {assigned_first_name} (@{assigned_username or 'N/A'})"
+                        )
                     except Exception as e:
-                        logger.error(f"Could not send DM to user {user_id}: {e}")
+                        dm_failed_count += 1
+                        logger.error(
+                            f"❌ Failed to send assignment DM | "
+                            f"Group: {group_id} | "
+                            f"To: {user_id} (@{username or 'N/A'}) | "
+                            f"Error: {e}"
+                        )
+
+            logger.info(
+                f"Assignment DM summary for group {group_id}: "
+                f"{dm_sent_count} sent, {dm_failed_count} failed out of {len(participants)} participants"
+            )
         else:
+            logger.error(f"Failed to assign Secret Santas for group {group_id}")
             await query.edit_message_text(get_text(lang, "assign_error"))
 
 
@@ -258,6 +313,13 @@ async def lang_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     # Update language
     if db.set_language(chat.id, new_lang):
+        logger.info(
+            f"🌐 Language changed | "
+            f"Group: {chat.id} | "
+            f"From: {current_lang} → To: {new_lang} | "
+            f"Admin: {user.id} (@{user.username or 'N/A'})"
+        )
         await update.message.reply_text(get_text(new_lang, "lang_success"))
     else:
+        logger.error(f"Failed to set language for group {chat.id}")
         await update.message.reply_text(get_text(current_lang, "setup_error"))

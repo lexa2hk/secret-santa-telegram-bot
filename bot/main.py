@@ -4,7 +4,7 @@ Main application entry point
 """
 import logging
 from telegram import Update
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 from bot.config import get_bot_token
 from bot.handlers.base_handlers import start, help_command
@@ -32,6 +32,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log errors caused by updates."""
+    logger.error("Exception while handling an update:", exc_info=context.error)
+
+    # Try to notify the user about the error
+    if isinstance(update, Update) and update.effective_message:
+        try:
+            await update.effective_message.reply_text(
+                "❌ An error occurred while processing your request. Please try again later."
+            )
+        except Exception:
+            # If we can't send a message, just log it
+            logger.error("Could not send error message to user")
+
+
 def main():
     """Start the bot."""
     try:
@@ -43,7 +58,7 @@ def main():
     # Create the Application
     application = Application.builder().token(token).build()
 
-    # Register handlers
+    # Register command handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("setup", setup))
@@ -57,6 +72,9 @@ def main():
     application.add_handler(CommandHandler("lang", lang_command))
     application.add_handler(CommandHandler("chat", chat_command))
     application.add_handler(CallbackQueryHandler(button_callback))
+
+    # Register error handler
+    application.add_error_handler(error_handler)
 
     # Run the bot
     logger.info("Starting Secret Santa bot...")

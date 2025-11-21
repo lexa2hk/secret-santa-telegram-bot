@@ -35,8 +35,18 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Add participant
     if db.add_participant(chat.id, user.id, user.username, user.first_name):
+        logger.info(
+            f"➕ New participant joined | "
+            f"Group: {chat.id} ({chat.title}) | "
+            f"User: {user.id} (@{user.username or 'N/A'}, {user.first_name})"
+        )
         await update.message.reply_text(get_text(lang, "join_success", name=user.first_name))
     else:
+        logger.info(
+            f"Duplicate join attempt | "
+            f"Group: {chat.id} | "
+            f"User: {user.id} (@{user.username or 'N/A'})"
+        )
         await update.message.reply_text(get_text(lang, "join_already_in", name=user.first_name))
 
 
@@ -178,6 +188,7 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if not user_groups:
         # Default to Russian for private chat if no groups found
         await update.message.reply_text(get_text("ru", "chat_no_groups"))
+        logger.info(f"User {user.id} (@{user.username}) attempted to send anonymous message but has no assigned groups")
         return
 
     # Check if message provided
@@ -188,12 +199,18 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     message_text = " ".join(context.args)
+    message_preview = message_text[:50] + "..." if len(message_text) > 50 else message_text
 
     # If user is in multiple groups, let them select (for now, send to first group)
     # TODO: Add proper group selection with inline keyboard
     if len(user_groups) > 1:
         # For now, send to all groups
         sent_count = 0
+        logger.info(
+            f"Anonymous message from user {user.id} (@{user.username}) "
+            f"to {len(user_groups)} groups, message length: {len(message_text)}"
+        )
+
         for group_id, group_lang in user_groups:
             # Find who is giving to this user (their Secret Santa)
             secret_santa = db.get_secret_santa_for_user(group_id, user.id)
@@ -204,14 +221,30 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                     full_message = get_text(group_lang, "chat_received_header") + message_text
                     await context.bot.send_message(chat_id=santa_user_id, text=full_message)
                     sent_count += 1
+
+                    logger.info(
+                        f"✅ Anonymous message delivered | "
+                        f"Group: {group_id} | "
+                        f"From: {user.id} (@{user.username or 'N/A'}) | "
+                        f"To Santa: {santa_user_id} (@{santa_username or 'N/A'}) | "
+                        f"Preview: '{message_preview}'"
+                    )
                 except Exception as e:
-                    logger.error(f"Could not send chat message to user {santa_user_id}: {e}")
+                    logger.error(
+                        f"❌ Failed to send anonymous message | "
+                        f"Group: {group_id} | "
+                        f"From: {user.id} (@{user.username or 'N/A'}) | "
+                        f"To Santa: {santa_user_id} (@{santa_username or 'N/A'}) | "
+                        f"Error: {e}"
+                    )
 
         if sent_count > 0:
             lang = user_groups[0][1]
             await update.message.reply_text(get_text(lang, "chat_message_sent"))
+            logger.info(f"User {user.id} successfully sent anonymous messages to {sent_count}/{len(user_groups)} groups")
         else:
             await update.message.reply_text(get_text("ru", "chat_error"))
+            logger.warning(f"User {user.id} failed to send anonymous messages to any groups")
     else:
         # Single group - send to that group's Secret Santa
         group_id, group_lang = user_groups[0]
@@ -225,8 +258,26 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 full_message = get_text(group_lang, "chat_received_header") + message_text
                 await context.bot.send_message(chat_id=santa_user_id, text=full_message, parse_mode=ParseMode.MARKDOWN)
                 await update.message.reply_text(get_text(group_lang, "chat_message_sent"))
+
+                logger.info(
+                    f"✅ Anonymous message delivered | "
+                    f"Group: {group_id} | "
+                    f"From: {user.id} (@{user.username or 'N/A'}, {user.first_name}) | "
+                    f"To Santa: {santa_user_id} (@{santa_username or 'N/A'}, {santa_first_name}) | "
+                    f"Length: {len(message_text)} chars | "
+                    f"Preview: '{message_preview}'"
+                )
             except Exception as e:
-                logger.error(f"Could not send chat message to user {santa_user_id}: {e}")
+                logger.error(
+                    f"❌ Failed to send anonymous message | "
+                    f"Group: {group_id} | "
+                    f"From: {user.id} (@{user.username or 'N/A'}) | "
+                    f"To Santa: {santa_user_id} (@{santa_username or 'N/A'}) | "
+                    f"Error: {e}"
+                )
                 await update.message.reply_text(get_text(group_lang, "chat_error"))
         else:
+            logger.warning(
+                f"No Secret Santa found for user {user.id} (@{user.username}) in group {group_id}"
+            )
             await update.message.reply_text(get_text(group_lang, "chat_error"))
