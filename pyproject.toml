@@ -3,8 +3,9 @@ name = "secret-santa-bot"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
+    "psycopg-pool>=3.2.7",
     "psycopg[binary]>=3.2.12",
     "python-dotenv>=1.2.1",
     "python-telegram-bot>=22.5",
