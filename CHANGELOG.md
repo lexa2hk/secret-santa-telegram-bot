@@ -15,7 +15,9 @@
 - 🌐 Isolated Docker network for database security
 - 📊 Comprehensive logging throughout database layer
 - 🔧 Database backup and restore documentation
-- 📚 Production deployment guide in README
+- 📚 Production deployment guide (DEPLOYMENT.md)
+- 🐧 Complete Ubuntu Server setup guide (UBUNTU_SETUP.md)
+- 📖 Quick-start commands in README
 
 ### Changed
 - ⚡ Improved performance with connection pooling
