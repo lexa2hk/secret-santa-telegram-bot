@@ -12,6 +12,17 @@ from bot.translations import get_text
 logger = logging.getLogger(__name__)
 
 
+def escape_markdown(text: str) -> str:
+    """Escape special Markdown characters to prevent parsing errors."""
+    if not text:
+        return text
+    # Escape Markdown special characters
+    special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    for char in special_chars:
+        text = text.replace(char, '\\' + char)
+    return text
+
+
 async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Join the Secret Santa in this group."""
     chat = update.effective_chat
@@ -40,14 +51,14 @@ async def join(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"Group: {chat.id} ({chat.title}) | "
             f"User: {user.id} (@{user.username or 'N/A'}, {user.first_name})"
         )
-        await update.message.reply_text(get_text(lang, "join_success", name=user.first_name))
+        await update.message.reply_text(get_text(lang, "join_success", name=escape_markdown(user.first_name)))
     else:
         logger.info(
             f"Duplicate join attempt | "
             f"Group: {chat.id} | "
             f"User: {user.id} (@{user.username or 'N/A'})"
         )
-        await update.message.reply_text(get_text(lang, "join_already_in", name=user.first_name))
+        await update.message.reply_text(get_text(lang, "join_already_in", name=escape_markdown(user.first_name)))
 
 
 async def participants(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -72,7 +83,7 @@ async def participants(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     participant_list = "\n".join(
-        [f"{i+1}. {p[2] or 'Unknown'} (@{p[1] or 'no username'})" for i, p in enumerate(parts)]
+        [f"{i+1}. {escape_markdown(p[2] or 'Unknown')} (@{escape_markdown(p[1] or 'no username')})" for i, p in enumerate(parts)]
     )
     await update.message.reply_text(
         get_text(lang, "participants_list", count=len(parts), list=participant_list),
@@ -154,11 +165,11 @@ async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 group_name = f"Group {group_id}"
 
             # Build message in the group's language
-            message = f"🎁 {group_name}\n\n"
+            message = f"🎁 {escape_markdown(group_name)}\n\n"
             message += get_text(group_lang, "assignment_header")
-            message += get_text(group_lang, "assignment_for", name=assigned_first_name)
+            message += get_text(group_lang, "assignment_for", name=escape_markdown(assigned_first_name))
             if assigned_username:
-                message += f" (@{assigned_username})"
+                message += f" (@{escape_markdown(assigned_username)})"
             message += "\n\n"
 
             if event_date:
@@ -218,8 +229,8 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 santa_user_id, santa_username, santa_first_name = secret_santa
                 try:
                     # Send message to Secret Santa
-                    full_message = get_text(group_lang, "chat_received_header") + message_text
-                    await context.bot.send_message(chat_id=santa_user_id, text=full_message)
+                    full_message = get_text(group_lang, "chat_received_header") + escape_markdown(message_text)
+                    await context.bot.send_message(chat_id=santa_user_id, text=full_message, parse_mode=ParseMode.MARKDOWN)
                     sent_count += 1
 
                     logger.info(
@@ -255,7 +266,7 @@ async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             santa_user_id, santa_username, santa_first_name = secret_santa
             try:
                 # Send message to Secret Santa
-                full_message = get_text(group_lang, "chat_received_header") + message_text
+                full_message = get_text(group_lang, "chat_received_header") + escape_markdown(message_text)
                 await context.bot.send_message(chat_id=santa_user_id, text=full_message, parse_mode=ParseMode.MARKDOWN)
                 await update.message.reply_text(get_text(group_lang, "chat_message_sent"))
 

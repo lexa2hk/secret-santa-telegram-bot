@@ -13,6 +13,17 @@ from bot.translations import get_text
 logger = logging.getLogger(__name__)
 
 
+def escape_markdown(text: str) -> str:
+    """Escape special Markdown characters to prevent parsing errors."""
+    if not text:
+        return text
+    # Escape Markdown special characters
+    special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    for char in special_chars:
+        text = text.replace(char, '\\' + char)
+    return text
+
+
 async def setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set up Secret Santa in a group (admin only)."""
     chat = update.effective_chat
@@ -40,11 +51,11 @@ async def setup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         # Try to get invite link (requires bot to be admin with invite link permission)
         try:
             invite_link = await chat.export_invite_link()
-            message = get_text(lang, "setup_success_with_link", admin=user.first_name, link=invite_link)
+            message = get_text(lang, "setup_success_with_link", admin=escape_markdown(user.first_name), link=invite_link)
             logger.info(f"Invite link generated for group {chat.id}: {invite_link}")
         except Exception as e:
             logger.warning(f"Could not export invite link for group {chat.id}: {e}")
-            message = get_text(lang, "setup_success_no_link", admin=user.first_name)
+            message = get_text(lang, "setup_success_no_link", admin=escape_markdown(user.first_name))
 
         message += get_text(lang, "setup_next_steps")
         await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
@@ -240,9 +251,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                     assigned_user_id, assigned_username, assigned_first_name = assignment
                     try:
                         message = get_text(lang, "assignment_header")
-                        message += get_text(lang, "assignment_for", name=assigned_first_name)
+                        message += get_text(lang, "assignment_for", name=escape_markdown(assigned_first_name))
                         if assigned_username:
-                            message += f" (@{assigned_username})"
+                            message += f" (@{escape_markdown(assigned_username)})"
                         message += "\n\n"
 
                         if event_date:
