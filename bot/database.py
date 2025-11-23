@@ -63,9 +63,23 @@ class Database:
                         username TEXT,
                         first_name TEXT,
                         assigned_to BIGINT,
+                        wish TEXT,
                         FOREIGN KEY (group_id) REFERENCES groups(group_id) ON DELETE CASCADE,
                         UNIQUE(group_id, user_id)
                     )
+                """)
+
+                # Add wish column if it doesn't exist (migration)
+                cursor.execute("""
+                    DO $$
+                    BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.columns
+                            WHERE table_name = 'participants' AND column_name = 'wish'
+                        ) THEN
+                            ALTER TABLE participants ADD COLUMN wish TEXT;
+                        END IF;
+                    END $$;
                 """)
 
                 conn.commit()
@@ -242,7 +256,7 @@ class Database:
             with self.get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute("""
-                        SELECT p2.user_id, p2.username, p2.first_name
+                        SELECT p2.user_id, p2.username, p2.first_name, p2.wish
                         FROM participants p1
                         JOIN participants p2 ON p1.assigned_to = p2.user_id AND p1.group_id = p2.group_id
                         WHERE p1.group_id = %s AND p1.user_id = %s
@@ -323,6 +337,38 @@ class Database:
                     return result
         except psycopg.Error as e:
             logger.error(f"Error getting secret santa for user {user_id} in group {group_id}: {e}")
+            return None
+
+    def set_wish(self, group_id: int, user_id: int, wish: str) -> bool:
+        """Set a wish for a participant"""
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE participants
+                        SET wish = %s
+                        WHERE group_id = %s AND user_id = %s
+                    """, (wish, group_id, user_id))
+                    conn.commit()
+                    return cursor.rowcount > 0
+        except psycopg.Error as e:
+            logger.error(f"Error setting wish for user {user_id} in group {group_id}: {e}")
+            return False
+
+    def get_wish(self, group_id: int, user_id: int) -> Optional[str]:
+        """Get a participant's wish"""
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT wish
+                        FROM participants
+                        WHERE group_id = %s AND user_id = %s
+                    """, (group_id, user_id))
+                    result = cursor.fetchone()
+                    return result[0] if result else None
+        except psycopg.Error as e:
+            logger.error(f"Error getting wish for user {user_id} in group {group_id}: {e}")
             return None
 
     def close(self):

@@ -9,7 +9,7 @@ TRANSLATIONS = {
         "start_group": "🎄 Hello! I'm the Secret Santa bot.\n\n👉 Admin: Use /setup to get started\n📖 Everyone: Use /help for instructions",
 
         # Help command
-        "help_private": "🎁 *Secret Santa Bot - Help*\n\n*For Group Admins:*\n• `/setup` - Create a Secret Santa group\n• `/setdate YYYY-MM-DD` - Set event date\n• `/setprice <amount>` - Set max gift price\n• `/assign` - Randomly assign Secret Santas\n• `/lang en` or `/lang ru` - Change language\n\n*For Participants:*\n• `/join` - Join the Secret Santa\n• `/info` - View event details\n• `/participants` - See who's participating\n• `/myassignment` - View your assignment\n• `/chat <message>` - Send anonymous message\n\n*Getting Started:*\n1️⃣ Add me to a group\n2️⃣ Admin uses /setup\n3️⃣ Set date and price\n4️⃣ Everyone joins with /join\n5️⃣ Admin assigns with /assign\n6️⃣ Check your assignment with /myassignment",
+        "help_private": "🎁 *Secret Santa Bot - Help*\n\n*For Group Admins:*\n• `/setup` - Create a Secret Santa group\n• `/setdate YYYY-MM-DD` - Set event date\n• `/setprice <amount>` - Set max gift price\n• `/assign` - Randomly assign Secret Santas\n• `/lang en` or `/lang ru` - Change language\n\n*For Participants:*\n• `/join` - Join the Secret Santa\n• `/info` - View event details\n• `/participants` - See who's participating\n• `/wish <text>` - Set your gift wish\n• `/myassignment` - View your assignment\n• `/chat <message>` - Send anonymous message\n\n*Getting Started:*\n1️⃣ Add me to a group\n2️⃣ Admin uses /setup\n3️⃣ Set date and price\n4️⃣ Everyone joins with /join\n5️⃣ Admin assigns with /assign\n6️⃣ Check your assignment with /myassignment",
         "help_group": "🎁 *Secret Santa Bot - Help*\n\n*Admins:* /setup • /setdate • /setprice • /assign\n*Everyone:* /join • /info • /participants\n\nUse /help in private chat with me for detailed instructions!",
 
         # Setup command
@@ -99,6 +99,16 @@ TRANSLATIONS = {
         "chat_received_header": "📨 *Anonymous message from your Secret Santa recipient:*\n\n",
         "chat_select_group": "❌ You're in multiple Secret Santa groups.\n\n💡 Reply with the group number to select:\n\n{groups}\n\nThen use /chat again to send your message.",
         "chat_group_selected": "✅ Group selected: *{group}*\n\n💡 Now use /chat <message> to send a message.",
+
+        # Wish command
+        "wish_private_only": "❌ This command only works in private chat!\n\n💡 DM me to set your wish.",
+        "wish_no_groups": "❌ You're not participating in any Secret Santa groups yet!\n\n💡 Join a group first with /join",
+        "wish_usage": "🎁 *Set Your Gift Wish*\n\nUsage: `/wish <your wish>`\n\n✅ Example: `/wish I'd love a book or coffee mug!`\n\n💡 Your Secret Santa will see this when checking their assignment.",
+        "wish_set_success": "✅ Your wish has been saved!\n\n🎁 Wish: _{wish}_\n\n💡 Your Secret Santa will be notified!",
+        "wish_notification": "🎁 *Good news!*\n\n{name} has set a gift wish:\n\n_{wish}_\n\n💡 This should help you choose the perfect gift!",
+        "wish_error": "❌ Error saving your wish.\n\n💡 Please try again!",
+        "wish_display": "🎁 Wish: _{wish}_\n",
+        "wish_not_set": "🎁 Wish: _Not set yet_\n",
     },
     "ru": {
         # Start command
@@ -106,7 +116,7 @@ TRANSLATIONS = {
         "start_group": "🎄 Привет! Я бот для Тайного Санты.\n\n👉 Админ: Используй /setup для начала\n📖 Все: Используй /help для инструкций",
 
         # Help command
-        "help_private": "🎁 *Бот Тайный Санта - Помощь*\n\n*Для админов группы:*\n• `/setup` - Создать группу Тайного Санты\n• `/setdate ГГГГ-ММ-ДД` - Установить дату события\n• `/setprice <сумма>` - Установить макс. цену\n• `/assign` - Случайно назначить Тайных Сант\n• `/lang en` или `/lang ru` - Сменить язык\n\n*Для участников:*\n• `/join` - Присоединиться к Тайному Санте\n• `/info` - Посмотреть детали события\n• `/participants` - Кто участвует\n• `/myassignment` - Твоё назначение\n• `/chat <сообщение>` - Анонимное сообщение\n\n*Как начать:*\n1️⃣ Добавь меня в группу\n2️⃣ Админ использует /setup\n3️⃣ Установить дату и цену\n4️⃣ Все присоединяются через /join\n5️⃣ Админ назначает через /assign\n6️⃣ Проверь назначение через /myassignment",
+        "help_private": "🎁 *Бот Тайный Санта - Помощь*\n\n*Для админов группы:*\n• `/setup` - Создать группу Тайного Санты\n• `/setdate ГГГГ-ММ-ДД` - Установить дату события\n• `/setprice <сумма>` - Установить макс. цену\n• `/assign` - Случайно назначить Тайных Сант\n• `/lang en` или `/lang ru` - Сменить язык\n\n*Для участников:*\n• `/join` - Присоединиться к Тайному Санте\n• `/info` - Посмотреть детали события\n• `/participants` - Кто участвует\n• `/wish <текст>` - Указать пожелание\n• `/myassignment` - Твоё назначение\n• `/chat <сообщение>` - Анонимное сообщение\n\n*Как начать:*\n1️⃣ Добавь меня в группу\n2️⃣ Админ использует /setup\n3️⃣ Установить дату и цену\n4️⃣ Все присоединяются через /join\n5️⃣ Админ назначает через /assign\n6️⃣ Проверь назначение через /myassignment",
         "help_group": "🎁 *Бот Тайный Санта - Помощь*\n\n*Админы:* /setup • /setdate • /setprice • /assign\n*Все:* /join • /info • /participants\n\nИспользуй /help в личке со мной для подробных инструкций!",
 
         # Setup command
@@ -196,6 +206,16 @@ TRANSLATIONS = {
         "chat_received_header": "📨 Анонимное сообщение от получателя твоего подарка:\n\n",
         "chat_select_group": "Ты участвуешь в нескольких группах Тайного Санты. Ответь номером группы для выбора:\n\n{groups}\n\nЗатем используй /chat снова, чтобы отправить сообщение.",
         "chat_group_selected": "Группа выбрана: {group}\nТеперь используй /chat <сообщение> для отправки.",
+
+        # Wish command
+        "wish_private_only": "Эта команда работает только в личных сообщениях! Напиши мне в личку, чтобы установить пожелание.",
+        "wish_no_groups": "Ты еще не участвуешь ни в одной группе Тайного Санты!\n\nПрисоединись к группе с помощью /join",
+        "wish_usage": "Использование: /wish <твоё пожелание>\nПример: /wish Хотел бы книгу или кружку для кофе!",
+        "wish_set_success": "✅ Твоё пожелание сохранено!\n\n🎁 Пожелание: _{wish}_\n\nТвой Тайный Санта будет уведомлен!",
+        "wish_notification": "🎁 *Хорошие новости!*\n\n{name} указал пожелание:\n\n_{wish}_\n\nЭто поможет выбрать идеальный подарок!",
+        "wish_error": "Ошибка при сохранении пожелания. Попробуй снова!",
+        "wish_display": "🎁 Пожелание: _{wish}_\n",
+        "wish_not_set": "🎁 Пожелание: _Не указано_\n",
     }
 }
 

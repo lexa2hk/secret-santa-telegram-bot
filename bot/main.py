@@ -22,6 +22,7 @@ from bot.handlers.participant_handlers import (
     info,
     my_assignment,
     chat_command,
+    wish,
 )
 
 # Enable logging
@@ -74,6 +75,7 @@ def main():
     application.add_handler(CommandHandler("assign", assign))
     application.add_handler(CommandHandler("myassignment", my_assignment))
     application.add_handler(CommandHandler("lang", lang_command))
+    application.add_handler(CommandHandler("wish", wish))
     application.add_handler(CommandHandler("chat", chat_command))
     application.add_handler(CallbackQueryHandler(button_callback))
 

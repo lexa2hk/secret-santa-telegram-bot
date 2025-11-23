@@ -155,7 +155,7 @@ async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         assignment = db.get_assignment(group_id, user.id)
         if assignment:
-            assigned_user_id, assigned_username, assigned_first_name = assignment
+            assigned_user_id, assigned_username, assigned_first_name, assigned_wish = assignment
 
             # Get group name
             try:
@@ -177,9 +177,112 @@ async def my_assignment(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             if max_price:
                 message += get_text(group_lang, "assignment_max_price", price=max_price)
 
+            # Show wish if available
+            if assigned_wish:
+                message += get_text(group_lang, "wish_display", wish=escape_markdown(assigned_wish))
+            else:
+                message += get_text(group_lang, "wish_not_set")
+
             message += get_text(group_lang, "assignment_keep_secret")
 
             await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
+
+
+async def wish(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set a gift wish for Secret Santa."""
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if chat.type != "private":
+        # In group, use group's language
+        lang = get_lang(chat.id)
+        await update.message.reply_text(get_text(lang, "wish_private_only"))
+        return
+
+    # Get all groups where user is a participant
+    user_groups = db.get_user_groups(user.id)
+
+    # Also check for groups where user joined but assignments not done yet
+    all_user_groups = []
+    try:
+        with db.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT DISTINCT g.group_id, g.language
+                    FROM participants p
+                    JOIN groups g ON p.group_id = g.group_id
+                    WHERE p.user_id = %s
+                """, (user.id,))
+                all_user_groups = cursor.fetchall()
+    except Exception as e:
+        logger.error(f"Error getting user groups for wish: {e}")
+
+    if not all_user_groups:
+        # Default to Russian for private chat if no groups found
+        await update.message.reply_text(get_text("ru", "wish_no_groups"))
+        return
+
+    # Check if wish provided
+    if not context.args:
+        # Use language from first group
+        lang = all_user_groups[0][1] if all_user_groups else "ru"
+        await update.message.reply_text(get_text(lang, "wish_usage"))
+        return
+
+    wish_text = " ".join(context.args)
+
+    # Set wish for all groups the user is in
+    success_count = 0
+    lang = all_user_groups[0][1] if all_user_groups else "ru"
+
+    for group_id, group_lang in all_user_groups:
+        if db.set_wish(group_id, user.id, wish_text):
+            success_count += 1
+            logger.info(
+                f"🎁 Wish set | "
+                f"Group: {group_id} | "
+                f"User: {user.id} (@{user.username or 'N/A'}) | "
+                f"Wish length: {len(wish_text)} chars"
+            )
+
+            # Notify Secret Santa if assignments have been made
+            if db.is_group_assigned(group_id):
+                secret_santa = db.get_secret_santa_for_user(group_id, user.id)
+                if secret_santa:
+                    santa_user_id, santa_username, santa_first_name = secret_santa
+                    try:
+                        notification = get_text(
+                            group_lang,
+                            "wish_notification",
+                            name=escape_markdown(user.first_name or user.username or "Someone"),
+                            wish=escape_markdown(wish_text)
+                        )
+                        await context.bot.send_message(
+                            chat_id=santa_user_id,
+                            text=notification,
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                        logger.info(
+                            f"🔔 Wish notification sent | "
+                            f"Group: {group_id} | "
+                            f"From: {user.id} (@{user.username or 'N/A'}) | "
+                            f"To Santa: {santa_user_id} (@{santa_username or 'N/A'})"
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"❌ Failed to send wish notification | "
+                            f"Group: {group_id} | "
+                            f"Santa: {santa_user_id} (@{santa_username or 'N/A'}) | "
+                            f"Error: {e}"
+                        )
+
+    if success_count > 0:
+        await update.message.reply_text(
+            get_text(lang, "wish_set_success", wish=escape_markdown(wish_text)),
+            parse_mode=ParseMode.MARKDOWN
+        )
+    else:
+        await update.message.reply_text(get_text(lang, "wish_error"))
 
 
 async def chat_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

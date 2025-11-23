@@ -248,7 +248,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             for user_id, username, first_name, _ in participants:
                 assignment = db.get_assignment(group_id, user_id)
                 if assignment:
-                    assigned_user_id, assigned_username, assigned_first_name = assignment
+                    assigned_user_id, assigned_username, assigned_first_name, assigned_wish = assignment
                     try:
                         message = get_text(lang, "assignment_header")
                         message += get_text(lang, "assignment_for", name=escape_markdown(assigned_first_name))
@@ -260,6 +260,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                             message += get_text(lang, "assignment_event_date", date=event_date)
                         if max_price:
                             message += get_text(lang, "assignment_max_price", price=max_price)
+
+                        # Show wish if available
+                        if assigned_wish:
+                            message += get_text(lang, "wish_display", wish=escape_markdown(assigned_wish))
+                        else:
+                            message += get_text(lang, "wish_not_set")
 
                         message += get_text(lang, "assignment_keep_secret")
 
